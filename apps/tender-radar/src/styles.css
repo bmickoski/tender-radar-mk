@@ -22,8 +22,10 @@
   --tr-surface-warm: #fffdf7;
   --tr-surface-warm-strong: #fffef8;
   --tr-surface-chip: #eef5f7;
+  --tr-surface-glass: rgba(255, 255, 255, 0.12);
   --tr-shadow-soft: 0 16px 40px rgba(12, 47, 57, 0.08);
   --tr-shadow-strong: 0 24px 60px rgba(12, 47, 57, 0.22);
+  --tr-shadow-hover: 0 20px 44px rgba(12, 47, 57, 0.12);
   --tr-radius-card: 24px;
   --tr-radius-block: 18px;
   --tr-radius-pill: 999px;
@@ -53,7 +55,12 @@
   --tr-hero-card-gradient:
     radial-gradient(circle at top right, rgba(255, 234, 184, 0.55), transparent 28%),
     linear-gradient(180deg, #fffdf7 0%, #ffffff 100%);
+  --tr-panel-gradient: linear-gradient(180deg, #fffef7 0%, #ffffff 100%);
   --tr-focus-ring: 0 0 0 3px rgba(255, 214, 117, 0.45);
+  --tr-on-dark: #fffdf5;
+  --tr-on-dark-soft: rgba(255, 253, 245, 0.82);
+  --tr-on-dark-muted: rgba(255, 253, 245, 0.75);
+  --tr-on-dark-eyebrow: rgba(255, 253, 245, 0.78);
 }
 
 html,
@@ -258,6 +265,11 @@ textarea {
   gap: 24px;
 }
 
+.tr-action-stack {
+  display: grid;
+  gap: 10px;
+}
+
 .tr-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -272,6 +284,12 @@ textarea {
   background: var(--tr-surface-chip);
   color: var(--tr-ink-soft);
   font-size: 0.82rem;
+}
+
+.tr-section-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .tr-stage {

@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TenderDataService } from '@org/tenders/data';
@@ -18,9 +18,10 @@ import {
   TenderImportInput,
 } from '@org/models';
 import {
+  SectionCardComponent,
   ErrorMessageComponent,
   LoadingSpinnerComponent,
-  StageBadgeComponent,
+  TenderGridComponent,
 } from '@org/tenders/ui';
 
 @Component({
@@ -28,11 +29,10 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CurrencyPipe,
-    DatePipe,
+    SectionCardComponent,
     LoadingSpinnerComponent,
     ErrorMessageComponent,
-    StageBadgeComponent,
+    TenderGridComponent,
   ],
   template: `
     <div class="radar-page tr-page">
@@ -68,11 +68,7 @@ import {
 
       <div class="content-grid">
         <aside class="sidebar">
-          <section class="panel">
-            <div class="panel-header">
-              <h2>Saved Searches</h2>
-              <span>{{ savedSearches().length }}</span>
-            </div>
+          <tr-section-card title="Saved Searches" [meta]="savedSearches().length.toString()">
 
             <div class="saved-search-list">
               @for (search of savedSearches(); track search.id) {
@@ -115,13 +111,9 @@ import {
               </label>
               <button class="primary-button" type="submit">Save Search</button>
             </form>
-          </section>
+          </tr-section-card>
 
-          <section class="panel">
-            <div class="panel-header">
-              <h2>Manual Import</h2>
-              <span>MVP</span>
-            </div>
+          <tr-section-card title="Manual Import" meta="MVP">
 
             <form class="import-form" (ngSubmit)="importTender()">
               <label>
@@ -148,17 +140,14 @@ import {
 
               <button class="primary-button" type="submit">Add Tender</button>
             </form>
-          </section>
+          </tr-section-card>
         </aside>
 
         <main class="main-column">
-          <section class="panel">
-            <div class="panel-header">
-              <h2>Radar Filters</h2>
-              <button type="button" class="ghost-button" (click)="resetFilters()">
-                Reset
-              </button>
-            </div>
+          <tr-section-card title="Radar Filters">
+            <button trSectionActions type="button" class="ghost-button" (click)="resetFilters()">
+              Reset
+            </button>
 
             <div class="filters-grid">
               <label>
@@ -211,7 +200,7 @@ import {
                 </select>
               </label>
             </div>
-          </section>
+          </tr-section-card>
 
           @if (loading()) {
             <tr-loading-spinner />
@@ -227,48 +216,11 @@ import {
               <p>Alerts are simulated in-app for MVP v1.</p>
             </div>
 
-            <div class="tender-list">
-              @for (tender of tenders(); track tender.id) {
-                <article class="tender-card" (click)="openTender(tender.id)">
-                  <div class="card-topline">
-                    <tr-stage-badge [stage]="tender.stage" />
-                    <span class="cpv">{{ tender.cpvCode }}</span>
-                  </div>
-
-                  <p class="authority">{{ tender.authority }}</p>
-                  <h3>{{ tender.title }}</h3>
-                  <p class="meta">{{ tender.category }} &middot; {{ tender.region }}</p>
-                  <p class="description">{{ tender.description }}</p>
-
-                  <div class="fact-grid">
-                    <div>
-                      <span>Deadline</span>
-                      <strong>{{ tender.deadline | date: 'd MMM y, HH:mm' }}</strong>
-                    </div>
-                    <div>
-                      <span>Budget</span>
-                      <strong>
-                        @if (tender.budgetEstimate) {
-                          {{ tender.budgetEstimate | currency: 'EUR' : 'symbol' : '1.0-0' }}
-                        } @else {
-                          Review notice
-                        }
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div class="summary-list">
-                    @for (point of tender.summary; track point) {
-                      <span>{{ point }}</span>
-                    }
-                  </div>
-                </article>
-              } @empty {
-                <section class="panel empty-state">
-                  <p>No tenders matched the current filters.</p>
-                </section>
-              }
-            </div>
+            <tr-tender-grid
+              [tenders]="tenders()"
+              [emptyMessage]="'No tenders matched the current filters.'"
+              (tenderSelect)="openTender($event.id)"
+            />
 
             @if (hasMorePages()) {
               <div class="pagination">
@@ -309,8 +261,8 @@ import {
       margin-bottom: 28px;
       border-radius: 32px;
       background: var(--tr-hero-gradient);
-      color: #fffdf5;
-      box-shadow: 0 24px 60px rgba(12, 47, 57, 0.22);
+      color: var(--tr-on-dark);
+      box-shadow: var(--tr-shadow-strong);
     }
 
     .eyebrow {
@@ -318,7 +270,7 @@ import {
       text-transform: uppercase;
       letter-spacing: 0.16em;
       font-size: 0.8rem;
-      color: rgba(255, 253, 245, 0.78);
+      color: var(--tr-on-dark-eyebrow);
     }
 
     h1 {
@@ -332,7 +284,7 @@ import {
       max-width: 56ch;
       margin: 0;
       line-height: 1.6;
-      color: rgba(255, 253, 245, 0.82);
+      color: var(--tr-on-dark-soft);
     }
 
     .overview-grid {
@@ -342,8 +294,7 @@ import {
       align-content: start;
     }
 
-    .overview-card,
-    .tender-card {
+    .overview-card {
       border-radius: 24px;
       border: 1px solid var(--tr-border-soft);
       box-shadow: var(--tr-shadow-soft);
@@ -351,8 +302,8 @@ import {
 
     .overview-card {
       padding: 18px;
-      background: rgba(255, 255, 255, 0.12);
-      color: #fffdf5;
+      background: var(--tr-surface-glass);
+      color: var(--tr-on-dark);
       backdrop-filter: blur(8px);
     }
 
@@ -362,7 +313,7 @@ import {
       font-size: 0.82rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: rgba(255, 253, 245, 0.75);
+      color: var(--tr-on-dark-muted);
     }
 
     .overview-card strong {
@@ -383,8 +334,7 @@ import {
     }
 
     .saved-search-list,
-    .import-form,
-    .tender-list {
+    .import-form {
       display: grid;
       gap: 14px;
     }
@@ -402,7 +352,7 @@ import {
       gap: 6px;
       padding: 14px 16px;
       border-radius: 18px;
-      border: 1px solid rgba(12, 47, 57, 0.1);
+      border: 1px solid var(--tr-border-softest);
       background: var(--tr-surface-warm);
       text-align: left;
       cursor: pointer;
@@ -413,7 +363,7 @@ import {
       gap: 12px;
       margin-top: 18px;
       padding-top: 18px;
-      border-top: 1px solid rgba(12, 47, 57, 0.08);
+      border-top: 1px solid var(--tr-border-soft);
     }
 
     .saved-search-remove {
@@ -427,17 +377,14 @@ import {
       cursor: pointer;
     }
 
-    .saved-search strong,
-    .tender-card h3 {
-      color: #10292f;
+    .saved-search strong {
+      color: var(--tr-ink);
     }
 
     .saved-search span,
     .empty-copy,
-    .results-bar,
-    .meta,
-    .description {
-      color: #5f6f76;
+    .results-bar {
+      color: var(--tr-muted);
     }
 
     .filters-grid {
@@ -455,95 +402,6 @@ import {
       padding: 6px 0 0;
     }
 
-    .tender-card {
-      padding: 20px;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
-      background: linear-gradient(180deg, #fffef7 0%, #ffffff 100%);
-    }
-
-    .tender-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 44px rgba(12, 47, 57, 0.12);
-    }
-
-    .card-topline {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-      align-items: center;
-    }
-
-    .cpv {
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .authority,
-    .tender-card h3,
-    .meta,
-    .description {
-      margin: 0;
-    }
-
-    .authority {
-      font-weight: 600;
-      color: var(--tr-ink-soft);
-    }
-
-    .tender-card h3 {
-      font-size: 1.35rem;
-      line-height: 1.15;
-      margin-top: 8px;
-    }
-
-    .description {
-      margin-top: 10px;
-      line-height: 1.5;
-    }
-
-    .fact-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .fact-grid span {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--tr-muted-soft);
-    }
-
-    .fact-grid strong {
-      color: var(--tr-ink);
-    }
-
-    .summary-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 16px;
-    }
-
-    .summary-list span {
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: var(--tr-surface-chip);
-      color: var(--tr-ink-soft);
-      font-size: 0.82rem;
-    }
-
-    .empty-state {
-      text-align: center;
-    }
-
     @media (max-width: 768px) {
       .radar-page {
         padding: 16px;
@@ -553,7 +411,6 @@ import {
       .content-grid,
       .filters-grid,
       .overview-grid,
-      .fact-grid,
       .saved-search-card {
         grid-template-columns: 1fr;
       }

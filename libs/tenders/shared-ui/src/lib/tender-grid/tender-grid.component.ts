@@ -14,7 +14,7 @@ import { TenderCardComponent } from '../tender-card/tender-card.component';
           (tenderClick)="tenderSelect.emit($event)"
         />
       } @empty {
-        <div class="empty">No tenders found.</div>
+        <div class="empty">{{ emptyMessage() }}</div>
       }
     </div>
   `,
@@ -36,5 +36,6 @@ import { TenderCardComponent } from '../tender-card/tender-card.component';
 })
 export class TenderGridComponent {
   readonly tenders = input.required<Tender[]>();
+  readonly emptyMessage = input('No tenders found.');
   readonly tenderSelect = output<Tender>();
 }

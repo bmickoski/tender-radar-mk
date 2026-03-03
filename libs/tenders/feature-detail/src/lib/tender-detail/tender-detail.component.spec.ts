@@ -2,10 +2,12 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { Tender } from '@org/models';
 import { TenderDataService } from '@org/tenders/data';
 import { TenderDetailComponent } from './tender-detail.component';
+import { TenderWorkspacePanelComponent } from '../tender-workspace-panel/tender-workspace-panel.component';
 
 describe('TenderDetailComponent', () => {
   let fixture: ComponentFixture<TenderDetailComponent>;
@@ -113,24 +115,31 @@ describe('TenderDetailComponent', () => {
 
   it('loads the tender workspace on init', () => {
     expect(tenderDataService.getTenderById).toHaveBeenCalledWith('tn-001');
-    expect(component.workspaceNotes).toBe('Initial note');
-    expect(component.checklist.length).toBe(1);
-    expect(component.documents.length).toBe(1);
+    expect(component.tender()?.workspace.notes).toBe('Initial note');
+    expect(fixture.nativeElement.textContent).toContain('One-page brief');
+    expect(fixture.nativeElement.textContent).toContain('Bid workspace');
   });
 
   it('adds checklist items and documents to the draft workspace', () => {
-    component.addTask();
-    component.addDocument();
+    const workspace = fixture.debugElement.query(
+      By.directive(TenderWorkspacePanelComponent)
+    ).componentInstance as TenderWorkspacePanelComponent;
 
-    expect(component.checklist.length).toBe(2);
-    expect(component.documents.length).toBe(2);
+    workspace.addTask();
+    workspace.addDocument();
+
+    expect(workspace.checklist.length).toBe(2);
+    expect(workspace.documents.length).toBe(2);
   });
 
   it('persists the workspace through the data service', () => {
-    component.workspaceNotes = 'Updated workspace note';
-    component.checklist[0].status = 'done';
+    const workspace = fixture.debugElement.query(
+      By.directive(TenderWorkspacePanelComponent)
+    ).componentInstance as TenderWorkspacePanelComponent;
 
-    component.saveWorkspace();
+    workspace.workspaceNotes = 'Updated workspace note';
+    workspace.checklist[0].status = 'done';
+    workspace.emitSave();
 
     expect(tenderDataService.updateTenderWorkspace).toHaveBeenCalledWith(
       'tn-001',
@@ -139,14 +148,17 @@ describe('TenderDetailComponent', () => {
       })
     );
     expect(component.tender()?.workspace.notes).toBe('Updated workspace note');
-    expect(component.checklist[0]?.status).toBe('done');
+    expect(workspace.checklist[0]?.status).toBe('done');
   });
 
   it('navigates back to the radar page', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    component.backToRadar();
+    const workspace = fixture.debugElement.query(
+      By.directive(TenderWorkspacePanelComponent)
+    ).componentInstance as TenderWorkspacePanelComponent;
+    workspace.goBack.emit();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/tenders']);
   });
