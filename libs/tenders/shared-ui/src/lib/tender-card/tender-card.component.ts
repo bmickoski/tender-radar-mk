@@ -1,19 +1,27 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { Tender } from '@org/models';
+import { StageBadgeComponent } from '../stage-badge/stage-badge.component';
 
 @Component({
   selector: 'tr-tender-card',
-  imports: [CommonModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, CurrencyPipe, DatePipe, StageBadgeComponent],
+  host: {
+    'role': 'button',
+    'tabindex': '0',
+    '(click)': 'selectTender()',
+    '(keydown.enter)': 'selectTender()',
+    '(keydown.space)': 'handleSpace($event)',
+  },
   template: `
-    <article class="tender-card" (click)="tenderClick.emit(tender())">
+    <article class="tender-card">
       <div class="card-topline">
-        <span class="stage">{{ stageLabel(tender().stage) }}</span>
+        <tr-stage-badge [stage]="tender().stage" />
         <span class="cpv">{{ tender().cpvCode }}</span>
       </div>
       <p class="authority">{{ tender().authority }}</p>
       <h3 class="title">{{ tender().title }}</h3>
-      <p class="category">{{ tender().category }} · {{ tender().region }}</p>
+      <p class="category">{{ tender().category }} &middot; {{ tender().region }}</p>
       <div class="fact-row">
         <span>{{ tender().deadline | date: 'd MMM y' }}</span>
         <strong>
@@ -32,8 +40,8 @@ import { Tender } from '@org/models';
       height: 100%;
       padding: 18px;
       border-radius: 20px;
-      border: 1px solid rgba(12, 47, 57, 0.1);
-      background: #fffef8;
+      border: 1px solid var(--tr-border-softest);
+      background: var(--tr-surface-warm-strong);
       cursor: pointer;
     }
 
@@ -53,14 +61,13 @@ import { Tender } from '@org/models';
 
     .authority,
     .category,
-    .stage,
     .cpv {
-      color: #5f6f76;
+      color: var(--tr-muted);
     }
 
     .title {
       margin-top: 10px;
-      color: #10292f;
+      color: var(--tr-ink);
     }
 
     .category {
@@ -71,7 +78,6 @@ import { Tender } from '@org/models';
       margin-top: 16px;
     }
 
-    .stage,
     .cpv {
       font-size: 0.78rem;
       text-transform: uppercase;
@@ -85,16 +91,12 @@ export class TenderCardComponent {
   readonly tender = input.required<Tender>();
   readonly tenderClick = output<Tender>();
 
-  stageLabel(stage: Tender['stage']): string {
-    switch (stage) {
-      case 'new':
-        return 'New';
-      case 'changed':
-        return 'Changed';
-      case 'closing-soon':
-        return 'Closing Soon';
-      default:
-        return 'Tracked';
-    }
+  selectTender(): void {
+    this.tenderClick.emit(this.tender());
+  }
+
+  handleSpace(event: Event): void {
+    event.preventDefault();
+    this.selectTender();
   }
 }

@@ -1,21 +1,16 @@
 :host {
   display: block;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(255, 234, 184, 0.35), transparent 28%),
-    linear-gradient(180deg, #f4f1e7 0%, #f6fbfc 34%, #eef4f5 100%);
-  color: #10292f;
+  background: var(--tr-app-gradient);
+  color: var(--tr-ink);
 }
 
 .app-header {
   padding: 20px 0;
 }
 
-.app-header .container,
-.app-footer .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+.app-header .tr-shell,
+.app-footer .tr-shell {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,7 +26,7 @@
 
 .brand-block p {
   margin: 6px 0 0;
-  color: #4d5f66;
+  color: var(--tr-copy);
 }
 
 .app-header nav {
@@ -41,25 +36,25 @@
 }
 
 .app-header nav a {
-  color: #10292f;
+  color: var(--tr-ink);
   text-decoration: none;
   font-size: 1rem;
   padding: 10px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(12, 47, 57, 0.12);
+  border: 1px solid var(--tr-border-mid);
   background: rgba(255, 255, 255, 0.7);
 }
 
 .app-header nav a.active {
-  background: #10292f;
+  background: var(--tr-ink);
   color: #fffdf5;
 }
 
 .nav-badge {
   padding: 8px 12px;
   border-radius: 999px;
-  background: #ffe7aa;
-  color: #6a4b00;
+  background: var(--tr-brand-accent);
+  color: var(--tr-brand-accent-ink);
   font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -74,7 +69,7 @@
   padding: 0 0 32px;
 }
 
-.app-footer .container {
+.app-footer .tr-shell {
   display: grid;
   justify-items: center;
   gap: 6px;
@@ -84,11 +79,11 @@
 .app-footer p {
   margin: 0;
   font-size: 0.9rem;
-  color: #4d5f66;
+  color: var(--tr-copy);
 }
 
 @media (max-width: 768px) {
-  .app-header .container {
+  .app-header .tr-shell {
     flex-direction: column;
     align-items: flex-start;
   }

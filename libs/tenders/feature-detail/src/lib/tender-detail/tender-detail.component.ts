@@ -6,26 +6,35 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TenderDataService } from '@org/tenders/data';
-import { Tender } from '@org/models';
+import {
+  Tender,
+  TenderDocument,
+  TenderTask,
+  TenderWorkspaceUpdateInput,
+} from '@org/models';
 import {
   ErrorMessageComponent,
   LoadingSpinnerComponent,
+  StageBadgeComponent,
 } from '@org/tenders/ui';
 
 @Component({
   selector: 'tr-tender-detail',
   imports: [
     CommonModule,
+    FormsModule,
     CurrencyPipe,
     DatePipe,
     RouterLink,
     LoadingSpinnerComponent,
     ErrorMessageComponent,
+    StageBadgeComponent,
   ],
   template: `
-    <div class="detail-page">
+    <div class="detail-page tr-page--compact">
       @if (loading()) {
         <tr-loading-spinner />
       } @else if (error()) {
@@ -39,11 +48,9 @@ import {
           <a routerLink="/tenders">Back to radar</a>
         </div>
 
-        <section class="headline-card">
+        <section class="headline-card tr-card tr-card--warm">
           <div class="headline-meta">
-            <span class="stage" [class]="'stage stage-' + tender()!.stage">
-              {{ stageLabel(tender()!.stage) }}
-            </span>
+            <tr-stage-badge [stage]="tender()!.stage" />
             <span>{{ tender()!.authority }}</span>
             <span>{{ tender()!.cpvCode }}</span>
           </div>
@@ -52,7 +59,7 @@ import {
         </section>
 
         <div class="detail-grid">
-          <section class="brief-card">
+          <section class="brief-card tr-card">
             <h2>One-page brief</h2>
 
             <div class="facts-grid">
@@ -109,7 +116,7 @@ import {
             </div>
           </section>
 
-          <aside class="workflow-card">
+          <aside class="workflow-card tr-card">
             <div class="action-stack">
               <a
                 class="primary-link"
@@ -125,13 +132,104 @@ import {
             </div>
 
             <div class="section-block">
-              <h3>Starter checklist</h3>
-              <ul>
-                <li>Validate amendment history and last seen hash.</li>
-                <li>Assign legal, finance, and technical owners.</li>
-                <li>Confirm reusable certificates from the document vault.</li>
-                <li>Set an internal deadline before the official one.</li>
-              </ul>
+              <div class="section-heading">
+                <h3>Bid workspace</h3>
+                <button class="tr-button" type="button" (click)="saveWorkspace()">
+                  Save workspace
+                </button>
+              </div>
+
+              <label class="field">
+                <span>Internal deadline</span>
+                <input [(ngModel)]="internalDeadline" type="datetime-local" />
+              </label>
+
+              <label class="field">
+                <span>Bid notes</span>
+                <textarea [(ngModel)]="workspaceNotes" rows="4"></textarea>
+              </label>
+            </div>
+
+            <div class="section-block">
+              <div class="section-heading">
+                <h3>Checklist</h3>
+                <button class="tr-button--ghost" type="button" (click)="addTask()">
+                  Add task
+                </button>
+              </div>
+
+              <div class="workspace-list">
+                @for (task of checklist; track task.id) {
+                  <article class="workspace-card">
+                    <label class="field compact">
+                      <span>Task</span>
+                      <input [(ngModel)]="task.title" />
+                    </label>
+                    <label class="field compact">
+                      <span>Owner</span>
+                      <input [(ngModel)]="task.owner" />
+                    </label>
+                    <label class="field compact">
+                      <span>Status</span>
+                      <select [(ngModel)]="task.status">
+                        <option value="todo">To do</option>
+                        <option value="in-progress">In progress</option>
+                        <option value="done">Done</option>
+                      </select>
+                    </label>
+                    <button
+                      class="tr-button--quiet remove-inline"
+                      type="button"
+                      (click)="removeTask(task.id)"
+                    >
+                      Remove
+                    </button>
+                  </article>
+                }
+              </div>
+            </div>
+
+            <div class="section-block">
+              <div class="section-heading">
+                <h3>Document vault</h3>
+                <button class="tr-button--ghost" type="button" (click)="addDocument()">
+                  Add document
+                </button>
+              </div>
+
+              <div class="workspace-list">
+                @for (document of documents; track document.id) {
+                  <article class="workspace-card">
+                    <label class="field compact">
+                      <span>Document</span>
+                      <input [(ngModel)]="document.name" />
+                    </label>
+                    <label class="field compact">
+                      <span>Status</span>
+                      <select [(ngModel)]="document.status">
+                        <option value="missing">Missing</option>
+                        <option value="ready">Ready</option>
+                        <option value="expiring">Expiring</option>
+                      </select>
+                    </label>
+                    <label class="field compact">
+                      <span>Expires</span>
+                      <input [(ngModel)]="document.expiresAt" type="date" />
+                    </label>
+                    <label class="field compact full">
+                      <span>Notes</span>
+                      <input [(ngModel)]="document.notes" />
+                    </label>
+                    <button
+                      class="tr-button--quiet remove-inline"
+                      type="button"
+                      (click)="removeDocument(document.id)"
+                    >
+                      Remove
+                    </button>
+                  </article>
+                }
+              </div>
             </div>
 
             <div class="section-block">
@@ -171,8 +269,6 @@ import {
   `,
   styles: [`
     .detail-page {
-      max-width: 1240px;
-      margin: 0 auto;
       padding: 32px 24px 48px;
     }
 
@@ -181,26 +277,15 @@ import {
     }
 
     .breadcrumb a {
-      color: #244651;
+      color: var(--tr-ink-soft);
       text-decoration: none;
       font-size: 0.95rem;
-    }
-
-    .headline-card,
-    .brief-card,
-    .workflow-card {
-      border-radius: 28px;
-      border: 1px solid rgba(12, 47, 57, 0.08);
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 16px 40px rgba(12, 47, 57, 0.08);
     }
 
     .headline-card {
       padding: 28px;
       margin-bottom: 24px;
-      background:
-        radial-gradient(circle at top right, rgba(255, 234, 184, 0.55), transparent 28%),
-        linear-gradient(180deg, #fffdf7 0%, #ffffff 100%);
+      background: var(--tr-hero-card-gradient);
     }
 
     .headline-meta {
@@ -208,7 +293,7 @@ import {
       flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 12px;
-      color: #5f6f76;
+      color: var(--tr-muted);
       font-size: 0.86rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -218,51 +303,20 @@ import {
       margin: 0 0 12px;
       font-size: clamp(2rem, 4vw, 3.6rem);
       line-height: 1;
-      color: #10292f;
+      color: var(--tr-ink);
     }
 
     .headline-card p {
       margin: 0;
       max-width: 70ch;
-      color: #4d5f66;
+      color: var(--tr-copy);
       line-height: 1.65;
-    }
-
-    .stage {
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 700;
-    }
-
-    .stage-new {
-      background: #d6f5df;
-      color: #176336;
-    }
-
-    .stage-changed {
-      background: #fff1c9;
-      color: #7a5700;
-    }
-
-    .stage-tracked {
-      background: #dbeeff;
-      color: #0e5278;
-    }
-
-    .stage-closing-soon {
-      background: #ffd8d2;
-      color: #8b2c1d;
     }
 
     .detail-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) 340px;
+      grid-template-columns: minmax(0, 1.15fr) 380px;
       gap: 24px;
-    }
-
-    .brief-card,
-    .workflow-card {
-      padding: 24px;
     }
 
     h2,
@@ -281,14 +335,14 @@ import {
     .facts-grid article {
       padding: 16px;
       border-radius: 18px;
-      background: #f7fafb;
+      background: var(--tr-surface-soft);
     }
 
     .facts-grid span {
       display: block;
       margin-bottom: 6px;
       font-size: 0.78rem;
-      color: #70848c;
+      color: var(--tr-muted-soft);
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
@@ -296,19 +350,19 @@ import {
     .section-block + .section-block {
       margin-top: 18px;
       padding-top: 18px;
-      border-top: 1px solid rgba(12, 47, 57, 0.08);
+      border-top: 1px solid var(--tr-border-soft);
     }
 
     .section-block p {
       margin: 0;
-      color: #4d5f66;
+      color: var(--tr-copy);
       line-height: 1.55;
     }
 
     ul {
       margin: 0;
       padding-left: 18px;
-      color: #4d5f66;
+      color: var(--tr-copy);
     }
 
     li + li {
@@ -326,8 +380,8 @@ import {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 46px;
-      padding: 0 18px;
+      min-height: 42px;
+      padding: 0 14px;
       border-radius: 999px;
       font: inherit;
       font-weight: 700;
@@ -338,6 +392,7 @@ import {
     .primary-link {
       background: #10292f;
       color: #fffdf5;
+      border: none;
     }
 
     .ghost-button {
@@ -346,14 +401,77 @@ import {
       color: #10292f;
     }
 
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field + .field {
+      margin-top: 12px;
+    }
+
+    .field span {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #70848c;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+    }
+
+    .workspace-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .workspace-card {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--tr-surface-soft);
+    }
+
+    .compact {
+      margin-top: 0;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .remove-inline {
+      grid-column: 1 / -1;
+    }
+
     @media (max-width: 768px) {
       .detail-page {
         padding: 16px 16px 40px;
       }
 
       .detail-grid,
-      .facts-grid {
+      .facts-grid,
+      .workspace-card {
         grid-template-columns: 1fr;
+      }
+
+      .section-heading {
+        flex-direction: column;
+        align-items: stretch;
       }
     }
   `],
@@ -367,6 +485,11 @@ export class TenderDetailComponent implements OnInit {
   readonly tender = signal<Tender | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+
+  internalDeadline = '';
+  workspaceNotes = '';
+  checklist: TenderTask[] = [];
+  documents: TenderDocument[] = [];
 
   ngOnInit(): void {
     this.loadTender();
@@ -387,23 +510,122 @@ export class TenderDetailComponent implements OnInit {
       this.tender.set(tender);
       this.loading.set(false);
       this.error.set(tender ? null : this.tenderDataService.error() || 'Tender not found');
+
+      if (tender) {
+        this.syncWorkspaceDraft(tender);
+      }
     });
+  }
+
+  saveWorkspace(): void {
+    const currentTender = this.tender();
+
+    if (!currentTender) {
+      return;
+    }
+
+    const payload: TenderWorkspaceUpdateInput = {
+      internalDeadline: this.internalDeadline
+        ? new Date(this.internalDeadline).toISOString()
+        : undefined,
+      notes: this.workspaceNotes.trim(),
+      checklist: this.checklist
+        .filter((task) => task.title.trim())
+        .map((task) => ({
+          ...task,
+          title: task.title.trim(),
+          owner: task.owner.trim(),
+        })),
+      documents: this.documents
+        .filter((document) => document.name.trim())
+        .map((document) => ({
+          ...document,
+          name: document.name.trim(),
+          notes: document.notes?.trim() || undefined,
+          expiresAt: document.expiresAt
+            ? new Date(document.expiresAt).toISOString()
+            : undefined,
+        })),
+    };
+
+    this.tenderDataService
+      .updateTenderWorkspace(currentTender.id, payload)
+      .subscribe((tender) => {
+        if (!tender) {
+          this.error.set(this.tenderDataService.error() || 'Failed to update workspace');
+          return;
+        }
+
+        this.tender.set(tender);
+        this.syncWorkspaceDraft(tender);
+      });
+  }
+
+  addTask(): void {
+    this.checklist = [
+      ...this.checklist,
+      {
+        id: this.createWorkspaceId('task'),
+        title: '',
+        owner: '',
+        status: 'todo',
+      },
+    ];
+  }
+
+  removeTask(id: string): void {
+    this.checklist = this.checklist.filter((task) => task.id !== id);
+  }
+
+  addDocument(): void {
+    this.documents = [
+      ...this.documents,
+      {
+        id: this.createWorkspaceId('doc'),
+        name: '',
+        status: 'missing',
+        expiresAt: '',
+        notes: '',
+      },
+    ];
+  }
+
+  removeDocument(id: string): void {
+    this.documents = this.documents.filter((document) => document.id !== id);
   }
 
   backToRadar(): void {
     this.router.navigate(['/tenders']);
   }
 
-  stageLabel(stage: Tender['stage']): string {
-    switch (stage) {
-      case 'new':
-        return 'New';
-      case 'changed':
-        return 'Changed';
-      case 'closing-soon':
-        return 'Closing Soon';
-      default:
-        return 'Tracked';
-    }
+  private syncWorkspaceDraft(tender: Tender): void {
+    this.internalDeadline = tender.workspace.internalDeadline
+      ? this.toLocalDateTime(tender.workspace.internalDeadline)
+      : '';
+    this.workspaceNotes = tender.workspace.notes;
+    this.checklist = tender.workspace.checklist.map((task) => ({ ...task }));
+    this.documents = tender.workspace.documents.map((document) => ({
+      ...document,
+      expiresAt: document.expiresAt ? this.toDateInput(document.expiresAt) : '',
+      notes: document.notes || '',
+    }));
+  }
+
+  private createWorkspaceId(prefix: 'task' | 'doc'): string {
+    return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
+  }
+
+  private toLocalDateTime(value: string): string {
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    const hours = `${date.getHours()}`.padStart(2, '0');
+    const minutes = `${date.getMinutes()}`.padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  private toDateInput(value: string): string {
+    return value.slice(0, 10);
   }
 }

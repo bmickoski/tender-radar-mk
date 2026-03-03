@@ -5,38 +5,18 @@ import { CommonModule } from '@angular/common';
   selector: 'tr-loading-spinner',
   imports: [CommonModule],
   template: `
-    <div class="spinner-container">
-      <div class="spinner"></div>
+    <div class="panel tr-feedback spinner-container">
+      <div class="tr-spinner"></div>
       <p>Loading...</p>
     </div>
   `,
   styles: [`
     .spinner-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      min-height: 220px;
     }
 
     p {
-      margin-top: 16px;
-      color: #666;
-      font-size: 1rem;
+      margin: 0;
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,

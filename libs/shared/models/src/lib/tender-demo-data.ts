@@ -6,6 +6,7 @@ import {
   Tender,
   TenderFilter,
   TenderImportInput,
+  TenderWorkspaceUpdateInput,
 } from './tender.model';
 
 export const tenderSeed: Tender[] = [
@@ -39,6 +40,51 @@ export const tenderSeed: Tender[] = [
       'Strong fit for SME MSP teams with public-sector references.',
     ],
     changes: [],
+    workspace: {
+      internalDeadline: '2026-03-18T12:00:00.000Z',
+      notes: 'Need final sign-off from finance before bond issuance.',
+      checklist: [
+        {
+          id: 'task-tn-001-1',
+          title: 'Review amendment history and scope clarifications',
+          owner: 'Legal',
+          status: 'done',
+        },
+        {
+          id: 'task-tn-001-2',
+          title: 'Confirm bid guarantee wording with bank',
+          owner: 'Finance',
+          status: 'in-progress',
+        },
+        {
+          id: 'task-tn-001-3',
+          title: 'Prepare technical references and CV package',
+          owner: 'Technical',
+          status: 'todo',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-tn-001-1',
+          name: 'Central Registry current status',
+          status: 'ready',
+          expiresAt: '2026-04-15T00:00:00.000Z',
+          notes: 'Reusable from prior municipal bids.',
+        },
+        {
+          id: 'doc-tn-001-2',
+          name: 'ISO 27001 certificate',
+          status: 'ready',
+          expiresAt: '2026-08-01T00:00:00.000Z',
+        },
+        {
+          id: 'doc-tn-001-3',
+          name: 'Reference project list',
+          status: 'missing',
+          notes: 'Need one more school-sector contract added.',
+        },
+      ],
+    },
   },
   {
     id: 'tn-002',
@@ -77,6 +123,37 @@ export const tenderSeed: Tender[] = [
         changedAt: '2026-03-02T14:20:00.000Z',
       },
     ],
+    workspace: {
+      internalDeadline: '2026-03-10T12:00:00.000Z',
+      notes: 'Awaiting authorized service partner letter.',
+      checklist: [
+        {
+          id: 'task-tn-002-1',
+          title: 'Validate spare-parts SLA amendment',
+          owner: 'Legal',
+          status: 'done',
+        },
+        {
+          id: 'task-tn-002-2',
+          title: 'Collect engineers CVs for submission package',
+          owner: 'Technical',
+          status: 'in-progress',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-tn-002-1',
+          name: 'Authorized service partner confirmation',
+          status: 'missing',
+        },
+        {
+          id: 'doc-tn-002-2',
+          name: 'Tax clearance certificate',
+          status: 'expiring',
+          expiresAt: '2026-03-15T00:00:00.000Z',
+        },
+      ],
+    },
   },
   {
     id: 'tn-003',
@@ -108,6 +185,32 @@ export const tenderSeed: Tender[] = [
       'Good fit for engineering consultancies with road supervision references.',
     ],
     changes: [],
+    workspace: {
+      internalDeadline: '2026-03-05T17:00:00.000Z',
+      notes: 'Internal review compressed because official deadline is close.',
+      checklist: [
+        {
+          id: 'task-tn-003-1',
+          title: 'Confirm supervising engineer availability',
+          owner: 'Technical',
+          status: 'in-progress',
+        },
+        {
+          id: 'task-tn-003-2',
+          title: 'Upload liability insurance confirmation',
+          owner: 'Legal',
+          status: 'todo',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-tn-003-1',
+          name: 'Professional liability insurance',
+          status: 'ready',
+          expiresAt: '2026-09-30T00:00:00.000Z',
+        },
+      ],
+    },
   },
   {
     id: 'tn-004',
@@ -139,6 +242,24 @@ export const tenderSeed: Tender[] = [
       'Good candidate for checklist and reminder workflows.',
     ],
     changes: [],
+    workspace: {
+      notes: 'Good candidate for a fast-turn submission with reused documents.',
+      checklist: [
+        {
+          id: 'task-tn-004-1',
+          title: 'Confirm staffing roster and shift coverage',
+          owner: 'Operations',
+          status: 'todo',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-tn-004-1',
+          name: 'Cleaning service references',
+          status: 'ready',
+        },
+      ],
+    },
   },
   {
     id: 'tn-005',
@@ -166,6 +287,24 @@ export const tenderSeed: Tender[] = [
       'Use this record to assign owners and capture missing documents.',
     ],
     changes: [],
+    workspace: {
+      notes: 'Discovery-stage lead. Need official dossier review before qualification work starts.',
+      checklist: [
+        {
+          id: 'task-tn-005-1',
+          title: 'Review official dossier and CPV scope',
+          owner: 'Bid Office',
+          status: 'todo',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-tn-005-1',
+          name: 'Tender dossier review notes',
+          status: 'missing',
+        },
+      ],
+    },
   },
 ];
 
@@ -200,6 +339,11 @@ export function cloneTenders(tenders: Tender[] = tenderSeed): Tender[] {
     requiredCertificates: [...tender.requiredCertificates],
     summary: [...tender.summary],
     changes: tender.changes.map((change) => ({ ...change })),
+    workspace: {
+      ...tender.workspace,
+      checklist: tender.workspace.checklist.map((task) => ({ ...task })),
+      documents: tender.workspace.documents.map((document) => ({ ...document })),
+    },
   }));
 }
 
@@ -355,6 +499,39 @@ export function createImportedTender(
         changedAt: createdAt,
       },
     ],
+    workspace: {
+      notes: 'Imported manually for triage.',
+      checklist: [
+        {
+          id: `task-${nextId}-1`,
+          title: 'Review official notice and complete qualification triage',
+          owner: 'Bid Office',
+          status: 'todo',
+        },
+      ],
+      documents: [
+        {
+          id: `doc-${nextId}-1`,
+          name: 'Qualification notes',
+          status: 'missing',
+        },
+      ],
+    },
+  };
+}
+
+export function updateTenderWorkspace(
+  tender: Tender,
+  workspace: TenderWorkspaceUpdateInput
+): Tender {
+  return {
+    ...tender,
+    workspace: {
+      internalDeadline: workspace.internalDeadline || undefined,
+      notes: workspace.notes,
+      checklist: workspace.checklist.map((task) => ({ ...task })),
+      documents: workspace.documents.map((document) => ({ ...document })),
+    },
   };
 }
 

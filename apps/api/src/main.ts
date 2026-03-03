@@ -9,6 +9,7 @@ import {
   Tender,
   TenderFilter,
   TenderImportInput,
+  TenderWorkspaceUpdateInput,
 } from '@org/models';
 
 const host = process.env.HOST ?? 'localhost';
@@ -232,6 +233,36 @@ app.post('/api/tenders/import', (req, res) => {
     const payload = req.body as TenderImportInput;
     const response: ApiResponse<Tender> = {
       data: tenderDataService.importTender(payload),
+      success: true,
+    };
+    res.json(response);
+  } catch (error) {
+    const response: ApiResponse<null> = {
+      data: null,
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+    res.status(500).json(response);
+  }
+});
+
+app.patch('/api/tenders/:id/workspace', (req, res) => {
+  try {
+    const payload = req.body as TenderWorkspaceUpdateInput;
+    const tender = tenderDataService.updateTenderWorkspace(req.params.id, payload);
+
+    if (!tender) {
+      const response: ApiResponse<null> = {
+        data: null,
+        success: false,
+        error: 'Tender not found',
+      };
+      res.status(404).json(response);
+      return;
+    }
+
+    const response: ApiResponse<Tender> = {
+      data: tender,
       success: true,
     };
     res.json(response);

@@ -20,6 +20,7 @@ import {
 import {
   ErrorMessageComponent,
   LoadingSpinnerComponent,
+  StageBadgeComponent,
 } from '@org/tenders/ui';
 
 @Component({
@@ -31,9 +32,10 @@ import {
     DatePipe,
     LoadingSpinnerComponent,
     ErrorMessageComponent,
+    StageBadgeComponent,
   ],
   template: `
-    <div class="radar-page">
+    <div class="radar-page tr-page">
       <header class="hero">
         <div class="hero-copy">
           <p class="eyebrow">TenderRadar MK</p>
@@ -229,9 +231,7 @@ import {
               @for (tender of tenders(); track tender.id) {
                 <article class="tender-card" (click)="openTender(tender.id)">
                   <div class="card-topline">
-                    <span class="stage" [class]="'stage stage-' + tender.stage">
-                      {{ stageLabel(tender.stage) }}
-                    </span>
+                    <tr-stage-badge [stage]="tender.stage" />
                     <span class="cpv">{{ tender.cpvCode }}</span>
                   </div>
 
@@ -298,8 +298,6 @@ import {
   `,
   styles: [`
     .radar-page {
-      max-width: 1320px;
-      margin: 0 auto;
       padding: 32px 24px 48px;
     }
 
@@ -310,9 +308,7 @@ import {
       padding: 32px;
       margin-bottom: 28px;
       border-radius: 32px;
-      background:
-        radial-gradient(circle at top left, rgba(255, 234, 184, 0.8), transparent 35%),
-        linear-gradient(135deg, #0c2f39 0%, #154b54 62%, #fff7e0 140%);
+      background: var(--tr-hero-gradient);
       color: #fffdf5;
       box-shadow: 0 24px 60px rgba(12, 47, 57, 0.22);
     }
@@ -349,8 +345,8 @@ import {
     .overview-card,
     .tender-card {
       border-radius: 24px;
-      border: 1px solid rgba(12, 47, 57, 0.08);
-      box-shadow: 0 16px 40px rgba(12, 47, 57, 0.08);
+      border: 1px solid var(--tr-border-soft);
+      box-shadow: var(--tr-shadow-soft);
     }
 
     .overview-card {
@@ -407,7 +403,7 @@ import {
       padding: 14px 16px;
       border-radius: 18px;
       border: 1px solid rgba(12, 47, 57, 0.1);
-      background: #fffdf7;
+      background: var(--tr-surface-warm);
       text-align: left;
       cursor: pointer;
     }
@@ -424,9 +420,9 @@ import {
       min-height: 44px;
       padding: 0 12px;
       border-radius: 14px;
-      border: 1px solid rgba(12, 47, 57, 0.12);
-      background: #ffffff;
-      color: #5f6f76;
+      border: 1px solid var(--tr-border);
+      background: var(--tr-surface-strong);
+      color: var(--tr-muted);
       font: inherit;
       cursor: pointer;
     }
@@ -479,37 +475,11 @@ import {
       align-items: center;
     }
 
-    .stage,
     .cpv {
       font-size: 0.78rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-    }
-
-    .stage {
-      padding: 6px 10px;
-      border-radius: 999px;
-    }
-
-    .stage-new {
-      background: #d6f5df;
-      color: #176336;
-    }
-
-    .stage-changed {
-      background: #fff1c9;
-      color: #7a5700;
-    }
-
-    .stage-tracked {
-      background: #dbeeff;
-      color: #0e5278;
-    }
-
-    .stage-closing-soon {
-      background: #ffd8d2;
-      color: #8b2c1d;
     }
 
     .authority,
@@ -521,7 +491,7 @@ import {
 
     .authority {
       font-weight: 600;
-      color: #244651;
+      color: var(--tr-ink-soft);
     }
 
     .tender-card h3 {
@@ -548,11 +518,11 @@ import {
       font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #70848c;
+      color: var(--tr-muted-soft);
     }
 
     .fact-grid strong {
-      color: #10292f;
+      color: var(--tr-ink);
     }
 
     .summary-list {
@@ -565,8 +535,8 @@ import {
     .summary-list span {
       padding: 7px 10px;
       border-radius: 999px;
-      background: #eef5f7;
-      color: #244651;
+      background: var(--tr-surface-chip);
+      color: var(--tr-ink-soft);
       font-size: 0.82rem;
     }
 
@@ -802,16 +772,4 @@ export class TenderListComponent implements OnInit {
     }
   }
 
-  stageLabel(stage: Tender['stage']): string {
-    switch (stage) {
-      case 'new':
-        return 'New';
-      case 'changed':
-        return 'Changed';
-      case 'closing-soon':
-        return 'Closing Soon';
-      default:
-        return 'Tracked';
-    }
-  }
 }

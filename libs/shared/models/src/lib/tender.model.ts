@@ -7,6 +7,31 @@ export interface TenderChange {
   changedAt: string;
 }
 
+export type TenderTaskStatus = 'todo' | 'in-progress' | 'done';
+export type TenderDocumentStatus = 'missing' | 'ready' | 'expiring';
+
+export interface TenderTask {
+  id: string;
+  title: string;
+  owner: string;
+  status: TenderTaskStatus;
+}
+
+export interface TenderDocument {
+  id: string;
+  name: string;
+  status: TenderDocumentStatus;
+  expiresAt?: string;
+  notes?: string;
+}
+
+export interface TenderWorkspace {
+  internalDeadline?: string;
+  notes: string;
+  checklist: TenderTask[];
+  documents: TenderDocument[];
+}
+
 export interface Tender {
   id: string;
   title: string;
@@ -29,6 +54,7 @@ export interface Tender {
   lastChangedAt: string;
   summary: string[];
   changes: TenderChange[];
+  workspace: TenderWorkspace;
 }
 
 export interface SavedSearch {
@@ -88,4 +114,11 @@ export interface TenderFilter {
   stage?: TenderStage;
   deadlineWithinDays?: number;
   searchTerm?: string;
+}
+
+export interface TenderWorkspaceUpdateInput {
+  internalDeadline?: string;
+  notes: string;
+  checklist: TenderTask[];
+  documents: TenderDocument[];
 }

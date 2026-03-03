@@ -18,6 +18,7 @@ import {
   Tender,
   TenderFilter,
   TenderImportInput,
+  TenderWorkspaceUpdateInput,
   cloneSavedSearches,
   cloneTenders,
   createImportedTender,
@@ -25,6 +26,7 @@ import {
   getTenderAuthorities,
   getTenderCategories,
   getTenderOverview,
+  updateTenderWorkspace,
 } from '@org/models';
 
 @Injectable({
@@ -296,6 +298,47 @@ export class TenderDataService {
           const tender = createImportedTender(this.localTenders(), payload);
           this.localTenders.update((tenders) => [tender, ...tenders]);
           return this.recoverWithLocalData(error, tender, 'tender import');
+        })
+      );
+  }
+
+  updateTenderWorkspace(
+    id: string,
+    payload: TenderWorkspaceUpdateInput
+  ): Observable<Tender | null> {
+    if (this.useLocalData) {
+      const currentTender = this.localTenders().find((tender) => tender.id === id);
+      if (!currentTender) {
+        return of(null);
+      }
+
+      const updatedTender = updateTenderWorkspace(currentTender, payload);
+      this.localTenders.update((tenders) =>
+        tenders.map((tender) => (tender.id === id ? updatedTender : tender))
+      );
+      return of(updatedTender);
+    }
+
+    return this.http
+      .patch<ApiResponse<Tender>>(`${this.apiUrl}/tenders/${id}/workspace`, payload)
+      .pipe(
+        map((response) => {
+          if (!response.success) {
+            throw new Error(response.error || 'Failed to update tender workspace');
+          }
+          return response.data;
+        }),
+        catchError((error) => {
+          const currentTender = this.localTenders().find((tender) => tender.id === id);
+          if (!currentTender) {
+            return this.recoverWithLocalData(error, null, 'tender workspace');
+          }
+
+          const updatedTender = updateTenderWorkspace(currentTender, payload);
+          this.localTenders.update((tenders) =>
+            tenders.map((tender) => (tender.id === id ? updatedTender : tender))
+          );
+          return this.recoverWithLocalData(error, updatedTender, 'tender workspace');
         })
       );
   }

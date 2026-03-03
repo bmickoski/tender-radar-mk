@@ -5,8 +5,8 @@ test.describe('TenderRadar Smoke', () => {
     await page.goto('/');
     await page.waitForURL('**/tenders');
 
-    await expect(page.locator('h1').first()).toContainText('TenderRadar MK');
-    await expect(page.locator('text=Saved Searches')).toBeVisible();
-    await expect(page.locator('text=Radar Filters')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'TenderRadar MK' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Saved Searches' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Radar Filters' })).toBeVisible();
   });
 });

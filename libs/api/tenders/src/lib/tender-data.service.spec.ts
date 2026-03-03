@@ -61,4 +61,39 @@ describe('TenderDataService', () => {
       secondService.getSavedSearches().some((search) => search.id === savedSearch.id)
     ).toBe(false);
   });
+
+  it('persists tender workspace updates across service instances', () => {
+    const firstService = new TenderDataService(storageFilePath);
+
+    const updatedTender = firstService.updateTenderWorkspace('tn-001', {
+      internalDeadline: '2026-03-19T09:00:00.000Z',
+      notes: 'Workspace persisted for the bid team.',
+      checklist: [
+        {
+          id: 'task-tn-001-custom',
+          title: 'Finalize pricing sheet',
+          owner: 'Finance',
+          status: 'in-progress',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-tn-001-custom',
+          name: 'Pricing workbook',
+          status: 'ready',
+          notes: 'Final draft in shared drive.',
+        },
+      ],
+    });
+
+    const secondService = new TenderDataService(storageFilePath);
+
+    expect(updatedTender?.workspace.notes).toBe('Workspace persisted for the bid team.');
+    expect(secondService.getTenderById('tn-001')?.workspace.checklist[0]?.title).toBe(
+      'Finalize pricing sheet'
+    );
+    expect(secondService.getTenderById('tn-001')?.workspace.documents[0]?.name).toBe(
+      'Pricing workbook'
+    );
+  });
 });

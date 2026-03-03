@@ -7,6 +7,7 @@ import {
   Tender,
   TenderFilter,
   TenderImportInput,
+  TenderWorkspaceUpdateInput,
   cloneSavedSearches,
   cloneTenders,
   createImportedTender,
@@ -14,9 +15,10 @@ import {
   getTenderAuthorities,
   getTenderCategories,
   getTenderOverview,
+  updateTenderWorkspace,
 } from '@org/models';
-import fs from 'node:fs';
-import path from 'node:path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export class TenderDataService {
   private readonly storageFilePath: string;
@@ -83,6 +85,24 @@ export class TenderDataService {
     this.tenders = [tender, ...this.tenders];
     this.persistState();
     return tender;
+  }
+
+  updateTenderWorkspace(
+    id: string,
+    workspace: TenderWorkspaceUpdateInput
+  ): Tender | null {
+    const tenderIndex = this.tenders.findIndex((tender) => tender.id === id);
+
+    if (tenderIndex === -1) {
+      return null;
+    }
+
+    const updatedTender = updateTenderWorkspace(this.tenders[tenderIndex], workspace);
+    this.tenders = this.tenders.map((tender, index) =>
+      index === tenderIndex ? updatedTender : tender
+    );
+    this.persistState();
+    return updatedTender;
   }
 
   private loadState(): void {

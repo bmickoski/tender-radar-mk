@@ -133,5 +133,43 @@ describe('TenderDataService', () => {
       expect(searchResponse.total).toBe(1);
       expect(searchResponse.items[0]?.officialUrl).toBe(payload.officialUrl);
     });
+
+    it('updates the local tender workspace when the API workspace update fails', async () => {
+      const updatePromise = firstValueFrom(
+        service.updateTenderWorkspace('tn-001', {
+          internalDeadline: '2026-03-20T12:00:00.000Z',
+          notes: 'Fallback workspace update',
+          checklist: [
+            {
+              id: 'task-updated',
+              title: 'Confirm final pricing',
+              owner: 'Finance',
+              status: 'done',
+            },
+          ],
+          documents: [
+            {
+              id: 'doc-updated',
+              name: 'Pricing workbook',
+              status: 'ready',
+            },
+          ],
+        })
+      );
+
+      const request = httpMock.expectOne(
+        'http://localhost:3333/api/tenders/tn-001/workspace'
+      );
+      expect(request.request.method).toBe('PATCH');
+      request.flush('offline', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+
+      const updatedTender = await updatePromise;
+
+      expect(updatedTender?.workspace.notes).toBe('Fallback workspace update');
+      expect(updatedTender?.workspace.checklist[0]?.title).toBe('Confirm final pricing');
+    });
   });
 });
