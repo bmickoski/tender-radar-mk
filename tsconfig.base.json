@@ -15,14 +15,14 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@org/api/products": ["libs/api/products/src/index.ts"],
+      "@org/api/tenders": ["libs/api/tenders/src/index.ts"],
       "@org/models": ["libs/shared/models/src/index.ts"],
-      "@org/shop/data": ["libs/shop/data/src/index.ts"],
-      "@org/shop/feature-product-detail": [
-        "libs/shop/feature-product-detail/src/index.ts"
+      "@org/tenders/data": ["libs/tenders/data/src/index.ts"],
+      "@org/tenders/feature-detail": [
+        "libs/tenders/feature-detail/src/index.ts"
       ],
-      "@org/shop/feature-products": ["libs/shop/feature-products/src/index.ts"],
-      "@org/shop/shared-ui": ["libs/shop/shared-ui/src/index.ts"]
+      "@org/tenders/feature-list": ["libs/tenders/feature-list/src/index.ts"],
+      "@org/tenders/ui": ["libs/tenders/shared-ui/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

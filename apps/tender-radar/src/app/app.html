@@ -1,0 +1,24 @@
+<header class="app-header">
+  <div class="container">
+    <div class="brand-block">
+      <h1>{{ title }}</h1>
+      <p>Google Alerts + Trello for public tenders in North Macedonia</p>
+    </div>
+
+    <nav>
+      <a routerLink="/tenders" routerLinkActive="active">Tender Radar</a>
+      <span class="nav-badge">MVP v1</span>
+    </nav>
+  </div>
+</header>
+
+<main class="app-main">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="app-footer">
+  <div class="container">
+    <p>Tender discovery, manual import, change tracking, and bidder-side workflow in one place.</p>
+    <p>Built as an Nx Angular + Express MVP around North Macedonia procurement workflows.</p>
+  </div>
+</footer>

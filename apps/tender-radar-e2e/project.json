@@ -1,0 +1,9 @@
+{
+  "name": "tender-radar-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/tender-radar-e2e/src",
+  "implicitDependencies": ["tender-radar-web"],
+  "// targets": "to see all targets run: nx show project tender-radar-e2e --web",
+  "targets": {}
+}

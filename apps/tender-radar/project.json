@@ -1,0 +1,98 @@
+{
+  "name": "tender-radar-web",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "tr",
+  "sourceRoot": "apps/tender-radar/src",
+  "tags": ["scope:tenders"],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/tender-radar",
+        "browser": "apps/tender-radar/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/tender-radar/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/tender-radar/public"
+          }
+        ],
+        "styles": ["apps/tender-radar/src/styles.css"],
+        "server": "apps/tender-radar/src/main.server.ts",
+        "ssr": {
+          "entry": "apps/tender-radar/src/server.ts"
+        },
+        "outputMode": "server"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "dependsOn": ["api:serve"],
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "tender-radar-web:build:production"
+        },
+        "development": {
+          "buildTarget": "tender-radar-web:build:development"
+        }
+      },
+      "defaultConfiguration": "development",
+      "options": {
+        "proxyConfig": "apps/tender-radar/proxy.conf.json"
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular/build:extract-i18n",
+      "options": {
+        "buildTarget": "tender-radar-web:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../coverage/apps/tender-radar"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "tender-radar-web:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/tender-radar/browser",
+        "spa": true
+      }
+    }
+  }
+}

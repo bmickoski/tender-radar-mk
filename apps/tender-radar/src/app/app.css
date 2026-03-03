@@ -1,0 +1,99 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(255, 234, 184, 0.35), transparent 28%),
+    linear-gradient(180deg, #f4f1e7 0%, #f6fbfc 34%, #eef4f5 100%);
+  color: #10292f;
+}
+
+.app-header {
+  padding: 20px 0;
+}
+
+.app-header .container,
+.app-footer .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.brand-block h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.brand-block p {
+  margin: 6px 0 0;
+  color: #4d5f66;
+}
+
+.app-header nav {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.app-header nav a {
+  color: #10292f;
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(12, 47, 57, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.app-header nav a.active {
+  background: #10292f;
+  color: #fffdf5;
+}
+
+.nav-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #ffe7aa;
+  color: #6a4b00;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.app-main {
+  min-height: calc(100vh - 180px);
+}
+
+.app-footer {
+  padding: 0 0 32px;
+}
+
+.app-footer .container {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.app-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #4d5f66;
+}
+
+@media (max-width: 768px) {
+  .app-header .container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-header nav {
+    flex-wrap: wrap;
+  }
+}

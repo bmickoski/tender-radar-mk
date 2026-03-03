@@ -1,1 +1,2 @@
-export * from './lib/product.model';
+export * from './lib/tender.model';
+export * from './lib/tender-demo-data';
