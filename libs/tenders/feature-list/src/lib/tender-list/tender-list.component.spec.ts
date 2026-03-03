@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import {
   DashboardOverview,
   PaginatedResponse,
+  ScraperStatusSnapshot,
   SavedSearch,
   Tender,
 } from '@org/models';
@@ -56,6 +57,11 @@ describe('TenderListComponent', () => {
       lastChangedAt: '2026-02-28T09:15:00.000Z',
       summary: ['Fit for SME MSP teams.'],
       changes: [],
+      workspace: {
+        notes: '',
+        checklist: [],
+        documents: [],
+      },
     },
   ];
 
@@ -65,6 +71,46 @@ describe('TenderListComponent', () => {
     page: 1,
     pageSize: 12,
     totalPages: 1,
+  };
+
+  const scraperStatus: ScraperStatusSnapshot = {
+    latestRun: {
+      source: 'espp-concession-announcements->espp-fixture',
+      resolvedSource: 'espp-fixture',
+      runAt: '2026-03-03T16:01:21.340Z',
+      total: 2,
+      created: 0,
+      updated: 1,
+      unchanged: 1,
+      status: 'success',
+      durationMs: 837,
+      fallbackReason: 'ESPP source returned 403 Forbidden',
+    },
+    recentRuns: [
+      {
+        source: 'espp-concession-announcements->espp-fixture',
+        resolvedSource: 'espp-fixture',
+        runAt: '2026-03-03T16:01:21.340Z',
+        total: 2,
+        created: 0,
+        updated: 1,
+        unchanged: 1,
+        status: 'success',
+        durationMs: 837,
+        fallbackReason: 'ESPP source returned 403 Forbidden',
+      },
+      {
+        source: 'fixture',
+        resolvedSource: 'fixture',
+        runAt: '2026-03-03T14:00:00.000Z',
+        total: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        status: 'success',
+        durationMs: 212,
+      },
+    ],
   };
 
   const router = {
@@ -79,6 +125,8 @@ describe('TenderListComponent', () => {
     createSavedSearch: vi.fn((payload) => of({ id: 'search-002', ...payload })),
     deleteSavedSearch: vi.fn(() => of(true)),
     getOverview: vi.fn(() => of(overview)),
+    getScraperStatus: vi.fn(() => of(scraperStatus)),
+    triggerScraperRun: vi.fn(() => of(scraperStatus.latestRun)),
     getTenders: vi.fn(() => of(paginatedTenders)),
     importTender: vi.fn(() => of(tenders[0])),
   };
@@ -107,8 +155,13 @@ describe('TenderListComponent', () => {
     expect(tenderDataService.getAuthorities).toHaveBeenCalledTimes(1);
     expect(tenderDataService.getSavedSearches).toHaveBeenCalledTimes(1);
     expect(tenderDataService.getOverview).toHaveBeenCalledTimes(1);
+    expect(tenderDataService.getScraperStatus).toHaveBeenCalledTimes(1);
     expect(tenderDataService.getTenders).toHaveBeenCalledWith({}, 1, 12);
     expect(host.querySelector('h1')?.textContent).toContain('Public tenders');
+    expect(host.textContent).toContain('Collector Status');
+    expect(host.textContent).toContain('Healthy');
+    expect(host.textContent).toContain('Resolved via espp-fixture');
+    expect(host.textContent).toContain('Recent Runs');
     expect(host.textContent).toContain('Saved Searches');
     expect(host.textContent).toContain(
       'Managed Network and Endpoint Support for Municipal Schools'
@@ -171,5 +224,14 @@ describe('TenderListComponent', () => {
     tenderCard.click();
 
     expect(router.navigate).toHaveBeenCalledWith(['/tenders', 'tn-001']);
+  });
+
+  it('triggers the collector run and refreshes status and tender data', () => {
+    component.runScraper();
+
+    expect(tenderDataService.triggerScraperRun).toHaveBeenCalledTimes(1);
+    expect(tenderDataService.getScraperStatus).toHaveBeenCalledTimes(2);
+    expect(tenderDataService.getOverview).toHaveBeenCalledTimes(2);
+    expect(tenderDataService.getTenders).toHaveBeenCalledTimes(2);
   });
 });

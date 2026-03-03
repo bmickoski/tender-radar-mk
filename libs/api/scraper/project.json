@@ -1,0 +1,8 @@
+{
+  "name": "scraper",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/api/scraper/src",
+  "projectType": "library",
+  "tags": ["scope:api"],
+  "targets": {}
+}

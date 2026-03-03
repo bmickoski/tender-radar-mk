@@ -6,12 +6,13 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TenderDataService } from '@org/tenders/data';
 import {
   DashboardOverview,
+  ScraperStatusSnapshot,
   SavedSearch,
   Tender,
   TenderFilter,
@@ -28,6 +29,7 @@ import {
   selector: 'tr-tender-list',
   imports: [
     CommonModule,
+    DatePipe,
     FormsModule,
     SectionCardComponent,
     LoadingSpinnerComponent,
@@ -68,8 +70,93 @@ import {
 
       <div class="content-grid">
         <aside class="sidebar">
-          <tr-section-card title="Saved Searches" [meta]="savedSearches().length.toString()">
+          <tr-section-card title="Collector Status" [meta]="collectorMeta()">
+            <button
+              trSectionActions
+              type="button"
+              class="ghost-button"
+              [disabled]="runningScraper()"
+              (click)="runScraper()"
+            >
+              {{ runningScraper() ? 'Running...' : 'Run Collector' }}
+            </button>
 
+            @if (scraperStatus().latestRun; as latestRun) {
+              <div
+                class="collector-status-card"
+                [class.collector-status-card--failure]="latestRun.status === 'failure'"
+              >
+                <div class="collector-topline">
+                  <strong>Source</strong>
+                  <span
+                    class="collector-pill"
+                    [class.collector-pill--failure]="latestRun.status === 'failure'"
+                  >
+                    {{ latestRun.status }}
+                  </span>
+                </div>
+
+                <p class="collector-source">{{ latestRun.source }}</p>
+                @if (latestRun.resolvedSource && latestRun.resolvedSource !== latestRun.source) {
+                  <p class="collector-fallback">
+                    Resolved via {{ latestRun.resolvedSource }}
+                  </p>
+                }
+
+                <div class="collector-facts">
+                  <div>
+                    <span>Last Run</span>
+                    <strong>{{ latestRun.runAt | date: 'd MMM y, HH:mm' }}</strong>
+                  </div>
+                  <div>
+                    <span>Duration</span>
+                    <strong>{{ latestRun.durationMs }} ms</strong>
+                  </div>
+                  <div>
+                    <span>Created</span>
+                    <strong>{{ latestRun.created }}</strong>
+                  </div>
+                  <div>
+                    <span>Updated</span>
+                    <strong>{{ latestRun.updated }}</strong>
+                  </div>
+                </div>
+
+                @if (latestRun.errorMessage) {
+                  <p class="collector-error">{{ latestRun.errorMessage }}</p>
+                }
+
+                @if (latestRun.fallbackReason) {
+                  <p class="collector-fallback-reason">
+                    Fallback: {{ latestRun.fallbackReason }}
+                  </p>
+                }
+              </div>
+            } @else {
+              <p class="empty-copy">
+                No collector runs recorded yet. Start the scraper to populate source health.
+              </p>
+            }
+
+            @if (scraperStatus().recentRuns.length > 1) {
+              <div class="collector-history">
+                <h3>Recent Runs</h3>
+                <div class="collector-history-list">
+                  @for (run of scraperStatus().recentRuns.slice(0, 5); track run.runAt) {
+                    <article class="collector-history-item">
+                      <div>
+                        <strong>{{ run.status }}</strong>
+                        <span>{{ run.runAt | date: 'd MMM y, HH:mm' }}</span>
+                      </div>
+                      <p>{{ run.source }}</p>
+                    </article>
+                  }
+                </div>
+              </div>
+            }
+          </tr-section-card>
+
+          <tr-section-card title="Saved Searches" [meta]="savedSearches().length.toString()">
             <div class="saved-search-list">
               @for (search of savedSearches(); track search.id) {
                 <article class="saved-search-card">
@@ -114,7 +201,6 @@ import {
           </tr-section-card>
 
           <tr-section-card title="Manual Import" meta="MVP">
-
             <form class="import-form" (ngSubmit)="importTender()">
               <label>
                 <span>Title</span>
@@ -248,180 +334,286 @@ import {
       </div>
     </div>
   `,
-  styles: [`
-    .radar-page {
-      padding: 32px 24px 48px;
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
-      gap: 24px;
-      padding: 32px;
-      margin-bottom: 28px;
-      border-radius: 32px;
-      background: var(--tr-hero-gradient);
-      color: var(--tr-on-dark);
-      box-shadow: var(--tr-shadow-strong);
-    }
-
-    .eyebrow {
-      margin: 0 0 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      font-size: 0.8rem;
-      color: var(--tr-on-dark-eyebrow);
-    }
-
-    h1 {
-      margin: 0 0 14px;
-      font-size: clamp(2.2rem, 4vw, 4rem);
-      line-height: 0.98;
-      max-width: 12ch;
-    }
-
-    .hero-copy p:last-child {
-      max-width: 56ch;
-      margin: 0;
-      line-height: 1.6;
-      color: var(--tr-on-dark-soft);
-    }
-
-    .overview-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      align-content: start;
-    }
-
-    .overview-card {
-      border-radius: 24px;
-      border: 1px solid var(--tr-border-soft);
-      box-shadow: var(--tr-shadow-soft);
-    }
-
-    .overview-card {
-      padding: 18px;
-      background: var(--tr-surface-glass);
-      color: var(--tr-on-dark);
-      backdrop-filter: blur(8px);
-    }
-
-    .overview-card span {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--tr-on-dark-muted);
-    }
-
-    .overview-card strong {
-      font-size: 2rem;
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: 320px minmax(0, 1fr);
-      gap: 24px;
-    }
-
-    .sidebar,
-    .main-column {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .saved-search-list,
-    .import-form {
-      display: grid;
-      gap: 14px;
-    }
-
-    .saved-search-card {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
-      align-items: start;
-    }
-
-    .saved-search {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding: 14px 16px;
-      border-radius: 18px;
-      border: 1px solid var(--tr-border-softest);
-      background: var(--tr-surface-warm);
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .saved-search-form {
-      display: grid;
-      gap: 12px;
-      margin-top: 18px;
-      padding-top: 18px;
-      border-top: 1px solid var(--tr-border-soft);
-    }
-
-    .saved-search-remove {
-      min-height: 44px;
-      padding: 0 12px;
-      border-radius: 14px;
-      border: 1px solid var(--tr-border);
-      background: var(--tr-surface-strong);
-      color: var(--tr-muted);
-      font: inherit;
-      cursor: pointer;
-    }
-
-    .saved-search strong {
-      color: var(--tr-ink);
-    }
-
-    .saved-search span,
-    .empty-copy,
-    .results-bar {
-      color: var(--tr-muted);
-    }
-
-    .filters-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .results-bar,
-    .pagination {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-      padding: 6px 0 0;
-    }
-
-    @media (max-width: 768px) {
+  styles: [
+    `
       .radar-page {
-        padding: 16px;
+        padding: 32px 24px 48px;
       }
 
-      .hero,
-      .content-grid,
-      .filters-grid,
-      .overview-grid,
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+        gap: 24px;
+        padding: 32px;
+        margin-bottom: 28px;
+        border-radius: 32px;
+        background: var(--tr-hero-gradient);
+        color: var(--tr-on-dark);
+        box-shadow: var(--tr-shadow-strong);
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.8rem;
+        color: var(--tr-on-dark-eyebrow);
+      }
+
+      h1 {
+        margin: 0 0 14px;
+        font-size: clamp(2.2rem, 4vw, 4rem);
+        line-height: 0.98;
+        max-width: 12ch;
+      }
+
+      .hero-copy p:last-child {
+        max-width: 56ch;
+        margin: 0;
+        line-height: 1.6;
+        color: var(--tr-on-dark-soft);
+      }
+
+      .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        align-content: start;
+      }
+
+      .overview-card {
+        border-radius: 24px;
+        border: 1px solid var(--tr-border-soft);
+        box-shadow: var(--tr-shadow-soft);
+        padding: 18px;
+        background: var(--tr-surface-glass);
+        color: var(--tr-on-dark);
+        backdrop-filter: blur(8px);
+      }
+
+      .overview-card span {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--tr-on-dark-muted);
+      }
+
+      .overview-card strong {
+        font-size: 2rem;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 24px;
+      }
+
+      .sidebar,
+      .main-column {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .saved-search-list,
+      .import-form {
+        display: grid;
+        gap: 14px;
+      }
+
+      .collector-status-card {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        border-radius: 18px;
+        background: var(--tr-surface-soft);
+        border: 1px solid var(--tr-border-soft);
+      }
+
+      .collector-status-card--failure {
+        background: rgba(255, 216, 210, 0.28);
+        border-color: rgba(139, 44, 29, 0.2);
+      }
+
+      .collector-topline,
+      .collector-facts {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .collector-source,
+      .collector-error,
+      .collector-fallback,
+      .collector-fallback-reason {
+        margin: 0;
+        color: var(--tr-copy);
+      }
+
+      .collector-error {
+        color: var(--tr-brand-danger);
+        font-weight: 600;
+      }
+
+      .collector-fallback-reason {
+        color: var(--tr-brand-warning);
+        font-weight: 600;
+      }
+
+      .collector-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: var(--tr-radius-pill);
+        background: var(--tr-stage-new-bg);
+        color: var(--tr-stage-new-fg);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+      }
+
+      .collector-pill--failure {
+        background: var(--tr-stage-closing-bg);
+        color: var(--tr-stage-closing-fg);
+      }
+
+      .collector-facts span {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--tr-muted-soft);
+      }
+
+      .collector-history {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--tr-border-soft);
+      }
+
+      .collector-history h3 {
+        margin: 0;
+        color: var(--tr-ink);
+      }
+
+      .collector-history-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .collector-history-item {
+        display: grid;
+        gap: 4px;
+        padding: 12px 14px;
+        background: var(--tr-surface-warm);
+      }
+
+      .collector-history-item div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .collector-history-item p {
+        margin: 0;
+        color: var(--tr-muted);
+      }
+
       .saved-search-card {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .saved-search {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid var(--tr-border-softest);
+        background: var(--tr-surface-warm);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .saved-search-form {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+        padding-top: 18px;
+        border-top: 1px solid var(--tr-border-soft);
+      }
+
+      .saved-search-remove {
+        min-height: 44px;
+        padding: 0 12px;
+        border-radius: 14px;
+        border: 1px solid var(--tr-border);
+        background: var(--tr-surface-strong);
+        color: var(--tr-muted);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .saved-search strong {
+        color: var(--tr-ink);
+      }
+
+      .saved-search span,
+      .empty-copy,
+      .results-bar {
+        color: var(--tr-muted);
+      }
+
+      .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
       }
 
       .results-bar,
       .pagination {
-        flex-direction: column;
-        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        padding: 6px 0 0;
       }
-    }
-  `],
+
+      @media (max-width: 768px) {
+        .radar-page {
+          padding: 16px;
+        }
+
+        .hero,
+        .content-grid,
+        .filters-grid,
+        .overview-grid,
+        .saved-search-card {
+          grid-template-columns: 1fr;
+        }
+
+        .results-bar,
+        .pagination {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TenderListComponent implements OnInit {
@@ -441,9 +633,23 @@ export class TenderListComponent implements OnInit {
     closingSoonCount: 0,
     trackedAuthorities: 0,
   });
+  readonly scraperStatus = signal<ScraperStatusSnapshot>({
+    latestRun: null,
+    recentRuns: [],
+  });
+  readonly runningScraper = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly hasMorePages = computed(() => this.totalPages() > 1);
+  readonly collectorMeta = computed(() => {
+    const latestRun = this.scraperStatus().latestRun;
+
+    if (!latestRun) {
+      return 'No runs';
+    }
+
+    return latestRun.status === 'success' ? 'Healthy' : 'Attention';
+  });
 
   searchTerm = '';
   selectedAuthority = '';
@@ -462,6 +668,7 @@ export class TenderListComponent implements OnInit {
     this.loadAuthorities();
     this.loadSavedSearches();
     this.loadOverview();
+    this.loadScraperStatus();
     this.loadTenders();
   }
 
@@ -486,6 +693,23 @@ export class TenderListComponent implements OnInit {
   loadOverview(): void {
     this.tenderDataService.getOverview().subscribe((overview) => {
       this.overview.set(overview);
+    });
+  }
+
+  loadScraperStatus(): void {
+    this.tenderDataService.getScraperStatus().subscribe((status) => {
+      this.scraperStatus.set(status);
+    });
+  }
+
+  runScraper(): void {
+    this.runningScraper.set(true);
+
+    this.tenderDataService.triggerScraperRun().subscribe(() => {
+      this.runningScraper.set(false);
+      this.loadScraperStatus();
+      this.loadOverview();
+      this.loadTenders();
     });
   }
 
@@ -628,5 +852,4 @@ export class TenderListComponent implements OnInit {
       this.loadTenders();
     }
   }
-
 }

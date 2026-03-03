@@ -1,0 +1,57 @@
+[
+  {
+    "sourceKey": "espp-fixture",
+    "externalId": "espp-1001",
+    "title": "Clinical Imaging Equipment Maintenance and Spare Parts",
+    "description": "Preventive and corrective maintenance for imaging equipment with clarified spare-parts coverage.",
+    "authority": "University Clinic for Radiology",
+    "region": "Skopje",
+    "category": "Medical Equipment",
+    "cpvCode": "50421000",
+    "budgetEstimate": 320000,
+    "deadline": "2026-03-14T10:00:00.000Z",
+    "publishedAt": "2026-02-15T08:00:00.000Z",
+    "submissionMethod": "ESPP electronic submission",
+    "bidBond": "Bank guarantee of 5,000 EUR",
+    "requiredCertificates": [
+      "Authorized service partner confirmation",
+      "Tax clearance certificate",
+      "Engineers CVs"
+    ],
+    "evaluationCriteria": "Lowest compliant price",
+    "officialUrl": "https://example.mk/tenders/tn-002",
+    "summary": [
+      "Collector detected a deadline amendment on the public notice.",
+      "Still requires specialized service partner proof."
+    ],
+    "fingerprint": "h-73ac8dc2",
+    "collectedAt": "2026-03-03T10:00:00.000Z"
+  },
+  {
+    "sourceKey": "espp-fixture",
+    "externalId": "espp-1002",
+    "title": "Digital Archive and Registry Upgrade",
+    "description": "Platform upgrade for archive workflows and registry records across multiple departments.",
+    "authority": "Ministry of Culture",
+    "region": "Skopje",
+    "category": "IT Services",
+    "cpvCode": "72200000",
+    "budgetEstimate": 210000,
+    "deadline": "2026-04-18T10:00:00.000Z",
+    "publishedAt": "2026-03-03T09:00:00.000Z",
+    "submissionMethod": "ESPP electronic submission",
+    "bidBond": "2% bid guarantee required",
+    "requiredCertificates": [
+      "Central Registry current status",
+      "ISO 9001 or equivalent"
+    ],
+    "evaluationCriteria": "Lowest compliant price",
+    "officialUrl": "https://example.mk/tenders/espp-1002",
+    "summary": [
+      "New IT services opportunity for records modernization.",
+      "Strong fit for software vendors with public-sector implementation references."
+    ],
+    "fingerprint": "h-7d7309df",
+    "collectedAt": "2026-03-03T10:00:00.000Z"
+  }
+]

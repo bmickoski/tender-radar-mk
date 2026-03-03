@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createTenderFingerprint } from '@org/models';
 import { TenderDataService } from './tender-data.service';
 
 describe('TenderDataService', () => {
@@ -95,5 +96,82 @@ describe('TenderDataService', () => {
     expect(secondService.getTenderById('tn-001')?.workspace.documents[0]?.name).toBe(
       'Pricing workbook'
     );
+  });
+
+  it('upserts collected tenders and tracks changed notices', () => {
+    const firstService = new TenderDataService(storageFilePath);
+
+    const createdFingerprint = createTenderFingerprint(
+      'Digital Archive and Registry Upgrade',
+      'Ministry of Culture',
+      '2026-04-18T10:00:00.000Z'
+    );
+    const changedFingerprint = createTenderFingerprint(
+      'Clinical Imaging Equipment Maintenance and Spare Parts',
+      'University Clinic for Radiology',
+      '2026-03-14T10:00:00.000Z'
+    );
+
+    const result = firstService.syncCollectedTenders([
+      {
+        sourceKey: 'espp-fixture',
+        externalId: 'espp-1001',
+        title: 'Digital Archive and Registry Upgrade',
+        description: 'Platform upgrade for archive workflows and registry records.',
+        authority: 'Ministry of Culture',
+        region: 'Skopje',
+        category: 'IT Services',
+        cpvCode: '72200000',
+        budgetEstimate: 210000,
+        deadline: '2026-04-18T10:00:00.000Z',
+        publishedAt: '2026-03-03T09:00:00.000Z',
+        submissionMethod: 'ESPP electronic submission',
+        bidBond: '2% bid guarantee required',
+        requiredCertificates: ['Central Registry current status'],
+        evaluationCriteria: 'Lowest compliant price',
+        officialUrl: 'https://example.mk/tenders/espp-1001',
+        summary: ['New IT services opportunity for records modernization.'],
+        fingerprint: createdFingerprint,
+        collectedAt: '2026-03-03T10:00:00.000Z',
+      },
+      {
+        sourceKey: 'espp-fixture',
+        externalId: 'espp-tn-002',
+        title: 'Clinical Imaging Equipment Maintenance and Spare Parts',
+        description:
+          'Preventive and corrective maintenance for imaging equipment with clarified spare-parts coverage.',
+        authority: 'University Clinic for Radiology',
+        region: 'Skopje',
+        category: 'Medical Equipment',
+        cpvCode: '50421000',
+        budgetEstimate: 320000,
+        deadline: '2026-03-14T10:00:00.000Z',
+        publishedAt: '2026-02-15T08:00:00.000Z',
+        submissionMethod: 'ESPP electronic submission',
+        bidBond: 'Bank guarantee of 5,000 EUR',
+        requiredCertificates: [
+          'Authorized service partner confirmation',
+          'Tax clearance certificate',
+          'Engineers CVs',
+        ],
+        evaluationCriteria: 'Lowest compliant price',
+        officialUrl: 'https://example.mk/tenders/tn-002',
+        summary: ['Deadline amendment detected by the collector.'],
+        fingerprint: changedFingerprint,
+        collectedAt: '2026-03-03T10:00:00.000Z',
+      },
+    ]);
+
+    const secondService = new TenderDataService(storageFilePath);
+    const createdTender = secondService
+      .getAllTenders()
+      .items.find((tender) => tender.officialUrl === 'https://example.mk/tenders/espp-1001');
+    const changedTender = secondService.getTenderById('tn-002');
+
+    expect(result.created).toBe(1);
+    expect(result.updated).toBe(1);
+    expect(createdTender?.title).toBe('Digital Archive and Registry Upgrade');
+    expect(changedTender?.stage).toBe('changed');
+    expect(changedTender?.changes[0]?.label).toBe('Collector update');
   });
 });

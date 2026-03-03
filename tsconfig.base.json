@@ -15,6 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@org/api/scraper": ["libs/api/scraper/src/index.ts"],
       "@org/api/tenders": ["libs/api/tenders/src/index.ts"],
       "@org/models": ["libs/shared/models/src/index.ts"],
       "@org/tenders/data": ["libs/tenders/data/src/index.ts"],

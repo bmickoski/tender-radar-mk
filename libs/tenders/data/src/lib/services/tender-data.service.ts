@@ -15,6 +15,7 @@ import {
   PaginatedResponse,
   SavedSearch,
   SavedSearchInput,
+  ScraperStatusSnapshot,
   Tender,
   TenderFilter,
   TenderImportInput,
@@ -45,6 +46,31 @@ export class TenderDataService {
 
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
+
+  getScraperStatus(): Observable<ScraperStatusSnapshot> {
+    const fallbackStatus: ScraperStatusSnapshot = {
+      latestRun: null,
+      recentRuns: [],
+    };
+
+    if (this.useLocalData) {
+      return of(fallbackStatus);
+    }
+
+    return this.http
+      .get<ApiResponse<ScraperStatusSnapshot>>(`${this.apiUrl}/scraper/status`)
+      .pipe(
+        map((response) => {
+          if (!response.success) {
+            throw new Error(response.error || 'Failed to load scraper status');
+          }
+          return response.data;
+        }),
+        catchError((error) =>
+          this.recoverSilent(error, fallbackStatus, 'scraper status')
+        )
+      );
+  }
 
   getTenders(
     filter?: TenderFilter,
@@ -221,6 +247,23 @@ export class TenderDataService {
           this.localSavedSearches.update((searches) => [savedSearch, ...searches]);
           return this.recoverSilent(error, savedSearch, 'saved searches');
         })
+      );
+  }
+
+  triggerScraperRun() {
+    return this.http
+      .post<ApiResponse<ScraperStatusSnapshot['latestRun']>>(
+        `${this.apiUrl}/scraper/run`,
+        {}
+      )
+      .pipe(
+        map((response) => {
+          if (!response.success) {
+            throw new Error(response.error || 'Failed to run scraper');
+          }
+          return response.data;
+        }),
+        catchError((error) => this.recoverSilent(error, null, 'scraper run'))
       );
   }
 

@@ -6,6 +6,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { firstValueFrom } from 'rxjs';
+import { ScraperRunReport, ScraperStatusSnapshot } from '@org/models';
 import { TenderDataService } from './tender-data.service';
 
 describe('TenderDataService', () => {
@@ -37,6 +38,13 @@ describe('TenderDataService', () => {
       expect(service.loading()).toBe(false);
       expect(service.error()).toBeNull();
     });
+
+    it('returns an empty scraper status snapshot without reaching the API', async () => {
+      const snapshot = await firstValueFrom(service.getScraperStatus());
+
+      expect(snapshot.latestRun).toBeNull();
+      expect(snapshot.recentRuns).toEqual([]);
+    });
   });
 
   describe('browser fallback mode', () => {
@@ -63,6 +71,64 @@ describe('TenderDataService', () => {
     afterEach(() => {
       httpMock.verify();
       warnSpy.mockRestore();
+    });
+
+    it('falls back to an empty scraper status snapshot when the API request fails', async () => {
+      const statusPromise = firstValueFrom(service.getScraperStatus());
+
+      const request = httpMock.expectOne('http://localhost:3333/api/scraper/status');
+      request.flush('offline', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+
+      const snapshot = await statusPromise;
+
+      expect(snapshot).toEqual<ScraperStatusSnapshot>({
+        latestRun: null,
+        recentRuns: [],
+      });
+    });
+
+    it('returns null when triggering the scraper run fails', async () => {
+      const runPromise = firstValueFrom(service.triggerScraperRun());
+
+      const request = httpMock.expectOne('http://localhost:3333/api/scraper/run');
+      expect(request.request.method).toBe('POST');
+      request.flush('offline', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+
+      const result = await runPromise;
+
+      expect(result).toBeNull();
+    });
+
+    it('returns the scraper run report when the trigger succeeds', async () => {
+      const runPromise = firstValueFrom(service.triggerScraperRun());
+
+      const request = httpMock.expectOne('http://localhost:3333/api/scraper/run');
+      request.flush({
+        success: true,
+        data: {
+          source: 'espp-concession-announcements->espp-fixture',
+          resolvedSource: 'espp-fixture',
+          runAt: '2026-03-03T16:01:21.340Z',
+          total: 2,
+          created: 0,
+          updated: 0,
+          unchanged: 2,
+          status: 'success',
+          durationMs: 837,
+          fallbackReason: 'ESPP source returned 403 Forbidden',
+        } satisfies ScraperRunReport,
+      });
+
+      const result = await runPromise;
+
+      expect(result?.resolvedSource).toBe('espp-fixture');
+      expect(result?.fallbackReason).toBe('ESPP source returned 403 Forbidden');
     });
 
     it('falls back to local tenders when the API request fails', async () => {

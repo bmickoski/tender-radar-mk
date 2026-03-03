@@ -1,4 +1,5 @@
 import {
+  CollectedTenderRecord,
   createSavedSearch,
   DashboardOverview,
   PaginatedResponse,
@@ -7,6 +8,7 @@ import {
   Tender,
   TenderFilter,
   TenderImportInput,
+  TenderSyncResult,
   TenderWorkspaceUpdateInput,
   cloneSavedSearches,
   cloneTenders,
@@ -15,6 +17,7 @@ import {
   getTenderAuthorities,
   getTenderCategories,
   getTenderOverview,
+  upsertCollectedTenders,
   updateTenderWorkspace,
 } from '@org/models';
 import * as fs from 'node:fs';
@@ -85,6 +88,13 @@ export class TenderDataService {
     this.tenders = [tender, ...this.tenders];
     this.persistState();
     return tender;
+  }
+
+  syncCollectedTenders(records: CollectedTenderRecord[]): TenderSyncResult {
+    const result = upsertCollectedTenders(this.tenders, records);
+    this.tenders = result.tenders;
+    this.persistState();
+    return result;
   }
 
   updateTenderWorkspace(

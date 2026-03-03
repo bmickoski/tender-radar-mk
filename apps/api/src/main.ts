@@ -1,4 +1,9 @@
 import express from 'express';
+import {
+  createTenderCollectorSource,
+  ScraperRunHistoryService,
+  TenderScraperService,
+} from '@org/api/scraper';
 import { TenderDataService } from '@org/api/tenders';
 import {
   ApiResponse,
@@ -6,17 +11,26 @@ import {
   PaginatedResponse,
   SavedSearch,
   SavedSearchInput,
+  ScraperRunReport,
+  ScraperStatusSnapshot,
   Tender,
   TenderFilter,
   TenderImportInput,
   TenderWorkspaceUpdateInput,
 } from '@org/models';
+import * as path from 'node:path';
 
 const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 3333;
 
 const app = express();
 const tenderDataService = new TenderDataService();
+const scraperRunHistoryService = new ScraperRunHistoryService();
+const scraperFixturePath =
+  process.env['TENDER_RADAR_SCRAPER_FIXTURE'] ||
+  path.join(process.cwd(), 'data', 'fixtures', 'espp-public-feed.json');
+const scraperSourceMode =
+  process.env['TENDER_RADAR_SCRAPER_SOURCE'] || 'espp-concessions';
 
 app.use(express.json());
 
@@ -215,6 +229,62 @@ app.get('/api/overview', (req, res) => {
   try {
     const response: ApiResponse<DashboardOverview> = {
       data: tenderDataService.getOverview(),
+      success: true,
+    };
+    res.json(response);
+  } catch (error) {
+    const response: ApiResponse<null> = {
+      data: null,
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+    res.status(500).json(response);
+  }
+});
+
+app.get('/api/scraper/status', (req, res) => {
+  try {
+    const response: ApiResponse<ScraperStatusSnapshot> = {
+      data: scraperRunHistoryService.getStatus(),
+      success: true,
+    };
+    res.json(response);
+  } catch (error) {
+    const response: ApiResponse<null> = {
+      data: null,
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+    res.status(500).json(response);
+  }
+});
+
+app.post('/api/scraper/run', async (req, res) => {
+  try {
+    const source = createTenderCollectorSource(scraperSourceMode, scraperFixturePath);
+    const scraper = new TenderScraperService(source, tenderDataService);
+    const report = await scraper.runOnce().catch((error) => {
+      const failureReport: ScraperRunReport = {
+        source: source.name,
+        resolvedSource: source.name,
+        runAt: new Date().toISOString(),
+        total: 0,
+        created: 0,
+        updated: 0,
+        unchanged: 0,
+        status: 'failure',
+        durationMs: 0,
+        errorMessage: error instanceof Error ? error.message : 'Unknown scraper failure',
+      };
+
+      scraperRunHistoryService.recordRun(failureReport);
+      throw error;
+    });
+
+    scraperRunHistoryService.recordRun(report);
+
+    const response: ApiResponse<ScraperRunReport> = {
+      data: report,
       success: true,
     };
     res.json(response);
